@@ -1,56 +1,111 @@
 import streamlit as st
 import requests
 
-
-st.title("🚀 AI Career Roadmap Generator")
-
-
-roles = [
-    "AI Engineer",
-    "Machine Learning Engineer",
-    "Data Scientist",
-    "Data Analyst",
-    "Software Developer",
-    "Frontend Developer",
-    "Backend Developer",
-    "DevOps Engineer",
-    "Cloud Engineer",
-    "Cyber Security Analyst",
-    "Digital Marketing Specialist",
-    "Financial Analyst",
-    "HR Manager",
-    "Business Analyst",
-    "UI/UX Designer"
-]
-
-
-goal = st.selectbox(
-    "Choose Career Goal",
-    roles
+st.set_page_config(
+    page_title="AI Career Advisor",
+    page_icon="🚀",
+    layout="wide"
 )
 
+st.title("🚀 AI Career Advisor")
+st.write("Upload your resume and get AI-powered career recommendations.")
 
-if st.button("Generate Roadmap"):
+uploaded_file = st.file_uploader(
+    "📄 Upload Resume",
+    type=["pdf", "docx"]
+)
 
-    response = requests.post(
-        "http://127.0.0.1:8000/generate-roadmap",
-        json={
-            "goal": goal
+if uploaded_file:
+
+    if st.button("🔍 Analyze Resume"):
+
+        files = {
+            "file": (
+                uploaded_file.name,
+                uploaded_file.getvalue()
+            )
         }
-    )
 
-
-    if response.status_code == 200:
-
-        data = response.json()
-
-        st.subheader(
-            f"Roadmap for {goal}"
+        response = requests.post(
+            "http://127.0.0.1:8000/upload-resume",
+            files=files
         )
 
-        st.write(
-            data["roadmap"]
-        )
+        if response.status_code == 200:
 
-    else:
-        st.error("Backend Error")
+            data = response.json()
+
+            st.success("Resume Uploaded Successfully ✅")
+
+            # -------------------------
+            # Skills
+            # -------------------------
+
+            st.header("🛠 Detected Skills")
+
+            st.write(", ".join(data["skills"]))
+
+            # -------------------------
+            # Experience
+            # -------------------------
+
+            st.header("📈 Experience Level")
+
+            level = data["experience_level"]
+
+            if level == "Beginner":
+                st.success("🟢 Beginner")
+
+            elif level == "Intermediate":
+                st.warning("🟡 Intermediate")
+
+            else:
+                st.error("🔴 Experienced")
+
+            # -------------------------
+            # Recommended Role
+            # -------------------------
+
+            st.header("🎯 Recommended Career")
+
+            st.success(data["recommended_role"])
+
+            # -------------------------
+            # Career Matches
+            # -------------------------
+
+            st.header("🏆 Top Career Matches")
+
+            for career in data["career_matches"]:
+
+                st.subheader(
+                    f"{career['career']} ({career['match_percentage']}%)"
+                )
+
+                st.progress(career["match_percentage"] / 100)
+
+                st.write("✅ Matched Skills")
+
+                st.write(", ".join(career["matched_skills"]))
+
+                st.write("❌ Missing Skills")
+
+                st.write(", ".join(career["missing_skills"]))
+
+                st.divider()
+
+            # -------------------------
+            # Learning Plan
+            # -------------------------
+
+            st.header("📚 Personalized Learning Plan")
+
+            for week in data["learning_plan"]:
+
+                st.write(
+                    f"**Week {week['week']}** → {week['learn']}"
+                )
+
+        else:
+
+            st.error("Something went wrong.")

@@ -1,4 +1,4 @@
-from backend.careers import CAREER_ROADMAPS
+from careers import CAREER_ROADMAPS
 
 
 def generate_roadmap(goal):
